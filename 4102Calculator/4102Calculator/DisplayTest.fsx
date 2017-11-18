@@ -4,22 +4,23 @@ open System.Drawing
 
 //set up constants for all format methods
 let form = new Form()
-//let height = 400
-//let width = 300
 let numButtonWidth = 70
 let numButtonHeight = 50
 let buttonSize = Size(numButtonWidth, numButtonHeight)
 let buttonSpacing = 10
 let mutable displayText = ""
-let textDisplayHeight = 50//going with 100 for now 
+let textDisplayHeight = 50//going with 50, it seems like a nice height  
 form.Text <- "Pocket Calculator"
 let width = (4 * numButtonWidth) + (5 * buttonSpacing)
 let height = (9 * buttonSpacing) + (6 * numButtonHeight) + textDisplayHeight
 form.ClientSize <- Size(width, height)
 let displayFont = new Font(FontFamily.GenericSansSerif, 16.f)
 let buttonFont = new Font("Calibri", 13.f)
-let mutable buttonArray:Control[] = [||]
+let mutable numbuttonArray:Control[] = [||]
+let mutable operationButtonArray:Control[] = [||]
+let mutable clearButtons:Control[] = [||]
 let mutable labelDisplay = new Label()
+let mutable operationList = ["+"]
 
 let formatDisplay = 
     let displayLocation = Point(buttonSpacing, buttonSpacing)
@@ -31,14 +32,6 @@ let setButtonLocation x y =
     let xValue = (buttonSpacing * x) + (numButtonWidth * (x - 1))
     let yValue = height - (y * buttonSpacing) - (y * numButtonHeight)
     Point (xValue, yValue)
-
-
-//let createButtonEvents = 
-//    for button in buttonArray do 
-//        button.Click.Add(fun x -> 
-//            let temp = button.Text + "!"
-//            button.Text <- sprintf "%s" temp
-//            )
 
 let formatButtons = 
     //bottom row (row 6)
@@ -75,23 +68,72 @@ let formatButtons =
     let buttonClear = new Button(Text = "C", Size = buttonSize, Location = setButtonLocation 4 6, Font = buttonFont)
     let buttonClearEverything = new Button(Text = "CE", Size = buttonSize, Location = setButtonLocation 3 6, Font = buttonFont)
 
-    buttonArray <- [|buttonNegative; buttonZero; buttonDot; buttonEquals; buttonOne; buttonTwo; 
-    buttonThree; buttonPlus; buttonFour; buttonFive; buttonSix; buttonMinus;buttonSeven; buttonEight; buttonNine; 
-    buttonMultiply; buttonOpenParenthesis; buttonCloseParenthesis; buttonFactorial; buttonDivision; buttonClear; buttonClearEverything|]
-    form.Controls.AddRange(buttonArray) 
-
-    //createButtonEvents
-let createButtonEvents = 
-    for button in buttonArray do 
-        button.Click.Add(fun x -> 
-            let newInputString = displayText + button.Text
-            labelDisplay.Text <- sprintf "%s" newInputString
-            )
+    numbuttonArray <- [|buttonNegative; buttonZero; buttonOne; buttonTwo; 
+    buttonThree; buttonFour; buttonFive; buttonSix;buttonSeven; buttonEight; buttonNine|]
     
+    operationButtonArray <- [|buttonDot; buttonPlus; buttonMinus; buttonMultiply; buttonDivision; 
+    buttonOpenParenthesis; buttonCloseParenthesis; buttonFactorial|]
+
+    clearButtons <- [|buttonClear; buttonClearEverything|]
+
+    form.Controls.AddRange(numbuttonArray) 
+    form.Controls.AddRange(clearButtons)
+    form.Controls.Add(buttonEquals)
+    form.Controls.AddRange(operationButtonArray)
+
+    
+let createNumButtonEvents = 
+    for button in numbuttonArray do 
+        button.Click.Add(fun x ->
+            if displayText.Length < 20 then //arbitrary limit on how many characters can be entered at a time
+                displayText <- String.Concat(displayText, button.Text)
+                labelDisplay.Text <- sprintf "%s" displayText
+            )
+
+//let createOperationButtonHandler = 
+//    for button in operationButtonArray do 
+//        match button.Name with
+//        |"buttonDot" -> operationList <- List.append operationList ["."]  //not so sure about having buttonDot here
+//        |"buttonPlus" -> operationList <- List.append operationList ["+"]
+//        |"buttonMinus" -> operationList <- List.append operationList ["-"]
+//        |"buttonMultiply" -> operationList <- List.append operationList ["x"]
+//        |"buttonDivision" -> operationList <- List.append operationList ["/"]
+//        |"buttonOpenParenthesis" -> operationList <- List.append operationList ["("]
+//        |"buttonCloseParenthesis" -> operationList <- List.append operationList [")"]
+//        |"buttonFactorial" -> operationList <- List.append operationList ["!"]
+
+let createOperationButtonEvents = 
+    for button in operationButtonArray do 
+        button.Click.Add(fun x ->
+            if displayText.Length < 20 then //arbitrary limit on how many characters can be entered at a time
+                displayText <- String.Concat(displayText, button.Text)
+                labelDisplay.Text <- sprintf "%s" displayText
+            )
+
+//TODO: Find out what's wrong with the match statements. I think I just need to have them do something at the end, but idk
+//let createClearButtonEvents = 
+//    for button in clearButtons do 
+//        match button.Text with
+//        |"C" ->
+//            button.Click.Add(fun clear -> 
+//                //displayText <- String.Empty // find a way to remove last element in list. No array.remove feelsbadman
+//                labelDisplay.Text <- displayText
+//                //remove the last element in the list. Put logic in to remove digits and symbols  
+//                )
+//        |"CE" ->
+//            button.Click.Add(fun clearAll ->
+//                displayText <- String.Empty
+//                labelDisplay.Text <- displayText
+//                operationList <- List.Empty
+//                //TODO: I imagine eventually there will be an arugments list, empty that shit too 
+//                )
+
+let tempClearAllEvent = 
+    clearButtons.[1].Click.Add(fun clearAll ->
+        displayText <- String.Empty
+        labelDisplay.Text <- displayText
+        operationList <- List.empty
+        )
+
 
 form.Show()
-//buttonNegative.Click.Add(fun event -> 
-//        //buttonNegative.Text <- "++"
-//        buttonNegative.Text <- sprintf "%i" !numClicks
-//        incr numClicks
-//        ) 
