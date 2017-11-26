@@ -3,6 +3,7 @@ open System.Windows.Forms
 open System.Drawing
 open System.Web.Services.Description
 
+
 //set up constants for all format methods
 let form = new Form()
 let numButtonWidth = 70
@@ -20,6 +21,7 @@ let buttonFont = new Font("Calibri", 13.f)
 let mutable numbuttonArray:Control[] = [||]
 let mutable operationButtonArray:Control[] = [||]
 let mutable clearButtons:Control[] = [||]
+let mutable specialButtons:Control[] = [||]
 let mutable labelDisplay = new Label()
 let mutable operationList = List.empty
 
@@ -35,12 +37,40 @@ let setButtonLocation x y =
     let yValue = height - (y * buttonSpacing) - (y * numButtonHeight)
     Point (xValue, yValue)
 
-let compute arguments = 
+let compute(arguments:List<string>) = 
+    displayText <- String.Empty
+    let mutable answer = ""
     printfn "I'm in the compute function with list:"
     printfn "%A" arguments 
-    for element in arguments do 
-        printfn "hi"
+    //convert strings to floats and perform matching on symbols to do the math
+    let number1 = float arguments.[0]
+    let number2 = float arguments.[2]
+    match arguments.[1] with 
+    | "+" -> labelDisplay.Text <- sprintf "%f" (number1 + number2)
+    | "-" -> labelDisplay.Text <- sprintf "%f" (number1 - number2)
+    | "/" -> labelDisplay.Text <- sprintf "%f" (number1 / number2)
+    | "^" -> labelDisplay.Text <- sprintf "%f" (number1 ** number2)
+    | "x" -> labelDisplay.Text <- sprintf "%f" (number1 * number2)
+    | _ -> labelDisplay.Text <- sprintf "%s" "Error"
 
+    answer <- labelDisplay.Text
+    operationList <- List.empty
+    
+
+let disableNegative(buttonNegative:Control) = 
+    buttonNegative.Enabled <- false
+
+let disableDot(buttonDot:Control) = 
+    buttonDot.Enabled <- false
+
+let enableOpeartionButtons() = 
+    for button in operationButtonArray do 
+        button.Enabled <- true
+        printfn "%s is enabled" button.Name
+
+let enableSpecialButtons() = 
+    for button in specialButtons do 
+        button.Enabled <- true
 
 let formatButtons = 
     //bottom row (row 6)
@@ -48,9 +78,26 @@ let formatButtons =
     let buttonZero = new Button(Text = "0", Size = buttonSize, Location = setButtonLocation 2 1, Font = buttonFont)
     let buttonDot = new Button(Text = ".", Size = buttonSize, Location = setButtonLocation 3 1, Font = buttonFont)
     let buttonEquals = new Button(Text = "=", Size = buttonSize, Location = setButtonLocation 4 1, Font = buttonFont)
+    //create events for special case buttons
     buttonEquals.Click.Add(fun evArgs -> 
         operationList <- List.append operationList [labelDisplay.Text]
-        compute(operationList))
+        compute(operationList)
+        enableOpeartionButtons()
+        enableSpecialButtons()
+        )
+    buttonDot.Click.Add(fun x ->
+        printfn "Dot was pressed"
+        displayText <- String.Concat(displayText, buttonDot.Text)
+        labelDisplay.Text <- sprintf "%s" displayText
+        disableDot(buttonDot)
+        disableNegative(buttonNegative)
+        )
+    buttonNegative.Click.Add(fun x -> 
+        printfn "Negative was pressed"
+        displayText <- String.Concat(displayText, "-")
+        labelDisplay.Text <- sprintf "%s" displayText
+        disableNegative(buttonNegative)
+        )
 
     //next row up (row 5)
     let buttonOne = new Button(Text = "1", Size = buttonSize, Location = setButtonLocation 1 2, Font = buttonFont)
@@ -71,92 +118,58 @@ let formatButtons =
     let buttonMultiply = new Button(Text = "x", Size = buttonSize, Location = setButtonLocation 4 4, Font = buttonFont)
 
     //row 2 (top row)
-    
     let buttonDivision = new Button(Text = "/", Size = buttonSize, Location = setButtonLocation 4 5, Font = buttonFont)
-    let buttonClear = new Button(Text = "C", Size = buttonSize, Location = setButtonLocation 1 5, Font = buttonFont)
-    let buttonClearEverything = new Button(Text = "CE", Size = buttonSize, Location = setButtonLocation 2 5, Font = buttonFont)
+    let buttonClearEverything = new Button(Text = "Clear", Size = Size(buttonSize.Width *2 + buttonSpacing, buttonSize.Height), Location = setButtonLocation 1 5, Font = buttonFont)
+    let buttonPower = new Button(Text = "^", Size = buttonSize, Location = setButtonLocation 3 5, Font = buttonFont)
 
-    numbuttonArray <- [|buttonNegative; buttonZero; buttonOne; buttonTwo; buttonDot; 
-    buttonThree; buttonFour; buttonFive; buttonSix;buttonSeven; buttonEight; buttonNine|]
-    
-    operationButtonArray <- [|buttonPlus; buttonMinus; buttonMultiply; buttonDivision;|]
+    //add buttons to arrays and 
+    numbuttonArray <- [|buttonZero; buttonOne; buttonTwo; buttonThree; buttonFour; buttonFive; buttonSix;buttonSeven; buttonEight; buttonNine|]
+    operationButtonArray <- [|buttonPlus; buttonMinus; buttonMultiply; buttonDivision; buttonPower|]
+    clearButtons <- [|buttonClearEverything|]
+    specialButtons <- [|buttonNegative; buttonDot|]
 
-    clearButtons <- [|buttonClear; buttonClearEverything|]
-
+    //add buttons to the form
     form.Controls.AddRange(numbuttonArray) 
     form.Controls.AddRange(clearButtons)
     form.Controls.Add(buttonEquals)
     form.Controls.AddRange(operationButtonArray)
+    form.Controls.AddRange(specialButtons)
 
-let disableOperationButtons = 
+let disableOperationButtons() = 
     for button in operationButtonArray do 
         button.Enabled <- false
-
-let enableOpeartionButtons = 
-    for button in operationButtonArray do 
-        button.Enabled <- true
+        printfn "%s is disabled" button.Name
        
-        
 let createNumButtonEvents = 
     for button in numbuttonArray do 
         button.Click.Add(fun x ->
-            if displayText.Length < 20 then //arbitrary limit on how many characters can be entered at a time
-
+            if displayText.Length < 15 then 
                 displayText <- String.Concat(displayText, button.Text)
                 labelDisplay.Text <- sprintf "%s" displayText
             ) 
 
-//let createOperationButtonHandler = 
-//    for button in operationButtonArray do 
-//        match button.Name with
-//        |"buttonPlus" -> 
-//            operationList <- List.append operationList [labelDisplay.Text]
-//            operationList <- List.append operationList ["+"]
-//        |"buttonMinus" ->
-//            operationList <- List.append operationList [labelDisplay.Text]
-//            operationList <- List.append operationList ["-"]
-//        |"buttonMultiply" -> 
-//            operationList <- List.append operationList [labelDisplay.Text]
-//            operationList <- List.append operationList ["x"]
-//        |"buttonDivision" -> 
-//            operationList <- List.append operationList [labelDisplay.Text]
-//            operationList <- List.append operationList ["/"]
-//        |"buttonFactorial" -> 
-//            operationList <- List.append operationList [labelDisplay.Text]
-//            operationList <- List.append operationList ["!"]
-
 let createOperationButtonEvents = 
     for button in operationButtonArray do 
         button.Click.Add(fun x ->
-            if displayText.Length < 10 then //arbitrary limit on how many characters can be entered at a time
-                operationList <- List.append operationList [labelDisplay.Text]
-                operationList <- List.append operationList [button.Text]
-                displayText <- String.Empty
-                labelDisplay.Text <- displayText
+            operationList <- List.append operationList [labelDisplay.Text]
+            operationList <- List.append operationList [button.Text]
+            displayText <- String.Empty
+            labelDisplay.Text <- displayText
+            disableOperationButtons()
+            enableSpecialButtons()
+            printfn "%A" operationList
             )
-    operationList |> List.iter(printfn "%s")
-
+    
 let createClearButtonEvents = 
     for button in clearButtons do 
-        if button.Name = "buttonClear" then
-             button.Click.Add(fun clear -> 
-                 displayText <- String.Empty 
-                 labelDisplay.Text <- displayText
-                 //I think this will remove the last element printing to console just to be sure  
-                 let tempList = operationList.[..operationList.Length]
-                 operationList <- List.Empty //List.reduce()
-                 operationList <- tempList
-                 operationList |> List.iter(printfn "%s")
-                 printfn "%A" operationList
-                 )
-        else 
-             button.Click.Add(fun clearAll ->
-                 displayText <- String.Empty
-                 labelDisplay.Text <- displayText
-                 operationList <- List.Empty
-                 operationList |> List.iter(printfn "%s")
-                 printfn "%A" operationList
-                 )
+        button.Click.Add(fun clearAll ->
+            displayText <- String.Empty
+            labelDisplay.Text <- displayText
+            operationList <- List.Empty
+            enableOpeartionButtons()
+            enableSpecialButtons()
+            printfn "%A" operationList
+            )
 
 
 form.Show()
