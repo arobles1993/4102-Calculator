@@ -184,7 +184,6 @@ let main argv =
     //run the form
     Application.Run(form)
 
-    //Console.ReadKey() |> ignore
     0
 
 
