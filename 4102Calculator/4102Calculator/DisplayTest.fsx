@@ -1,4 +1,6 @@
-﻿open System
+﻿//module DisplayCalculator =
+
+open System
 open System.Windows.Forms
 open System.Drawing
 open System.Web.Services.Description
@@ -11,7 +13,7 @@ let numButtonHeight = 50
 let buttonSize = Size(numButtonWidth, numButtonHeight)
 let buttonSpacing = 10
 let mutable displayText = ""
-let textDisplayHeight = 50//going with 50, it seems like a nice height  
+let textDisplayHeight = 50  
 form.Text <- "Pocket Calculator"
 let width = (4 * numButtonWidth) + (5 * buttonSpacing)
 let height = (8 * buttonSpacing) + (5 * numButtonHeight) + textDisplayHeight

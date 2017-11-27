@@ -57,9 +57,8 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />
-    <Compile Include="CalculatorUI.fs" />
-    <Compile Include="CalculatorMain.fs" />
     <None Include="DisplayTest.fsx" />
+    <Compile Include="CalculatorMain.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Charting">
